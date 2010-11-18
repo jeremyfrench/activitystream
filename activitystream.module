@@ -45,7 +45,17 @@ function activitystream_save_account($module, &$user, $params) {
   $users = array();
   foreach ($arrfeeds as $url) {
     $params['feed'] = $url;
-    $result = db_query('INSERT INTO {activitystream_accounts} (module, uid, userid, password, feed) VALUES (:module, :uid, :userid, :password, :feed)', array(':module' => $module, ':uid' => $user->uid, ':userid' => $params['userid'], ':password' => $params['password'], ':feed' => $params['feed']));
+    $db_query = db_insert('activitystream_accounts')->
+     fields(array(
+       'module' => $module,
+       'uid' => $user->uid,
+       'userid' =>  $params['userid'],
+       'password' => $params['password'],
+       'feed' =>  $params['feed'],
+       'lastfetch' => '2000-01-01 01:01:01.000001' , 
+       )
+     )->execute();
+//    $result = db_query('INSERT INTO {activitystream_accounts} (module, uid, userid, password, feed, lastfetch) VALUES (:module, :uid, :userid, :password, :feed)', array(':module' => $module, ':uid' => $user->uid, ':userid' => $params['userid'], ':password' => $params['password'], ':feed' => $params['feed'], ));
     $user = (object) array(
         'uid' => $user->uid,
         'userid' => $params['userid'],
