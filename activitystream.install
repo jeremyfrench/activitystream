@@ -24,7 +24,27 @@ function activitystream_install() {
   db_query("UPDATE {system} SET weight = 100 WHERE name  = 'activitystream'");
   node_types_rebuild();
   $types = node_type_get_types();
-  node_add_body_field($types['activitystream']);
+  
+  // Try to add fields instead of a custom column
+  
+  $fields = activitystream_fields();
+  foreach($fields as $item) {
+    field_create_field($item);
+  }
+
+ $field_instances = activitystream_field_instances();
+ foreach($field_instances as $item) {
+   field_create_instance($item);
+ }
+
+ node_add_body_field($types['activitystream']);
+}
+
+function activitystream_uninstall() {
+  $fields = activitystream_fields();
+  foreach($fields as $item) {
+    field_delete_field($item['field_name']);
+  }  
 }
 
 /**
@@ -57,4 +77,105 @@ function activitystream_schema() {
   return $schema;
 }
 
+// Try using field api
+function activitystream_fields() {
+  $fields = array();
 
+  // store the GUID of the item.
+  $fields['guid'] = array(
+    'field_name' => 'activitystream_guid',
+    'type' => 'text',
+    'settings' => array(
+       'no_ui' => TRUE,
+     ),
+  );
+
+  // store the Module which created the item.  
+  $fields['module'] = array(
+    'field_name' => 'activitystream_module',
+    'type' => 'text',
+    'no_ui' => TRUE,
+  );  
+
+  // store a link back to the orignal item.
+  $fields['link'] = array(
+    'field_name' => 'activitystream_link',
+    'type' => 'text',
+    'settings' => array(
+       'no_ui' => TRUE,
+     ),
+  );
+
+  // store generic data for the orignal item. 
+  $fields['data'] = array(
+    'field_name' => 'activitystream_data',
+    'type' => 'text',
+    'settings' => array(
+       'no_ui' => TRUE,
+     ),
+  );
+  
+  // Store the changed date for the orignal item.
+  $fields['changed'] = array(
+    'field_name' => 'activitystream_changed',
+    'type' => 'int',
+    'settings' => array(
+       'no_ui' => TRUE,
+     ),
+  );
+  
+  return $fields;
+}
+
+function activitystream_field_instances() {
+  $field_instances = array();
+
+  $field_instances['guid_instance'] = array(
+    'field_name' => 'activitystream_guid',
+    'entity_type' => 'node',
+    'bundle' => 'activitystream',
+    'required' => TRUE,
+    'label' => t('GUID'),
+    'description' => t('GUID of item'),
+  );
+
+  $field_instances['module_instance'] = array(
+    'field_name' => 'activitystream_module',
+    'entity_type' => 'node',
+    'bundle' => 'activitystream',
+    'required' => TRUE,
+    'label' => t('module'),
+    'description' => t('module that created the item'),
+  );  
+
+$field_instances['link_instance'] = array(
+    'field_name' => 'activitystream_link',
+    'entity_type' => 'node',
+    'bundle' => 'activitystream',
+    'required' => TRUE,
+    'label' => t('module'),
+    'description' => t('module that created the item'),
+  );
+
+    //  
+  $field_instances['data_instance'] = array(
+    'field_name' => 'activitystream_data',
+    'entity_type' => 'node',
+    'bundle' => 'activitystream',
+    'required' => TRUE,
+    'label' => t('data'),
+    'description' => t('Meta data specific to the item'),
+  );
+  
+  // Store the changed date for the orignal item.
+  $field_instances['changed_instance'] = array(
+    'field_name' => 'activitystream_changed',
+    'entity_type' => 'node',
+    'bundle' => 'activitystream',
+    'required' => TRUE,
+    'label' => t('Changed'),
+    'description' => t('Date the item changed'),
+  );
+  
+  return field_instances;
+}

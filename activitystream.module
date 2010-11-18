@@ -395,8 +395,8 @@ function activitystream_view($node, $teaser = FALSE, $page = FALSE) {
   $result = db_query('SELECT s.module, s.link, s.data, s.nid FROM {activitystream} s WHERE s.nid=:nid', array(':nid' => $node->nid));      
   $action = $result->fetchObject();
 
-  $body_append = theme('activitystream_view', array('activity' => (array)$action));
-  $node->body[LANGUAGE_NONE][] = array('value'=> $body_append, 'format' =>'full_html');
+ // $body_append = theme('activitystream_view', array('activity' => (array)$action));
+ // $node->body[LANGUAGE_NONE][] = array('value'=> $body_append, 'format' =>'full_html');
 
   if ($page) {
     // Breadcrumb navigation
@@ -464,62 +464,25 @@ function activitystream_get_activity($user = NULL, $show_buddies = FALSE, $count
   return $return;
 }
 
-function theme_activitystream_header($action) {
-  return '<h3 class="datehead">'. format_date($action->created, 'medium') .'</h3>';
-}
 
-function theme_activitystream_item($action) {
-  $action = $action['action'];
-  $node = node_load($action->nid);
-  $date = theme('activitystream_date', array('date' => $node->created));
-  $user = _activitystream_user_load($node->uid);
-  $name = theme('activitystream_username', array('user' => $user));
-  if (function_exists('theme_'.$action->module .'_icon')) {
-    $theme_function = $action->module .'_icon';
-  } 
-  else {
-    $theme_function = 'activitystream_icon';
-  }
-  return '<span class="activitystream-item">'. theme($theme_function) ." <span>$name ". l($node->title, 'node/'. $node->nid) ." <span class=\"activitystream-created\">$date</span></span>". l('#', 'node/'. $node->nid, array('class' => 'permalink')) ."</span>\n";
-}
+
 
 
 function theme_activitystream($items) {
   drupal_add_css(drupal_get_path('module', 'activitystream') .'/activitystream.css');
   if (!count($items)) {
-    $ret = t('There are no activities to show.');
+    $ret = array(
+     '#markup' => '<p>' . t('There are no activities to show.') . '</p>',
+    );
   }
-  foreach ($items as $day) {
-    $ret .= "\n{$day['title']}\n";
+  /*foreach ($items as $day) {
+    
+    $ret[] = array( '#markup" => '<h3>' . $day['title'] . <;
     $ret .= theme('item_list', $day);
-  }
-  return '<div id="activitystream">'."\n". $ret ."\n</div>";
+  }*/
+  return array();
 }
 
-function theme_activitystream_date($date) {
-  $date = format_date($date, 'custom', 'g:ia');
-  return $date;
-}
-
-function theme_activitystream_username($user) {
-  $arrnames = split(' ', $user->name);
-  if (user_access('access user profiles')) {
-    return l($arrnames[0], 'user/'. $user->uid);
-  }
-  else {
-    return $arrnames[0];
-  }
-}
-
-function theme_activitystream_view($activity) {
-  $activity = $activity['activity'];
-  $node = node_load($activity['nid']);
-  $icon_theme = $activity['module'] .'_icon';
-  $return = '<p class="activitystream-original">See original: ';
-  $return .= theme($icon_theme) .'  '. l($node->title, $activity['link']);
-  $return .= '</p>';
-  return $return;
-}
 
 function activitystream_cron() {
   module_load_include('inc', 'node', 'node.pages');
@@ -819,9 +782,6 @@ function activitystream_save_stream(&$node, &$activity, $name) {
 
 function activitystream_theme() {
   return array(
-    'activitystream_item' => array(
-      'variables' => array('action' => NULL),
-    ),
     'activitystream' => array(
       'variables' => array('items' => NULL),
     ),
