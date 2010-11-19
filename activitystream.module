@@ -686,7 +686,9 @@ function activitystream_save_node($activity, $user, $name) {
   if (empty($activity['data'])) {
     $activity['data'] = '';
   }
-  $query = db_query("SELECT nid, changed FROM {activitystream} WHERE guid = :guid", array(':guid' => $activity['guid']));
+  
+  // FIXME: check for exsisting items and 
+  /*$query = db_query("SELECT nid, changed FROM {activitystream} WHERE guid = :guid", array(':guid' => $activity['guid']));
   $node = $query->fetchObject();
   if (isset($node->nid)) {
     $changed = $node->changed;
@@ -696,9 +698,16 @@ function activitystream_save_node($activity, $user, $name) {
     }
     $new = FALSE;
   } 
-  else {
-    $node = new stdClass();  
-    $new = true;
+  else {*/
+    // Create node object.
+    $node = new StdClass();
+    $node->type = 'activitystream';
+    $node->language = LANGUAGE_NONE;
+    node_object_prepare($node);
+    node_invoke($node, 'prepare');
+    module_invoke_all('node_prepare', $node, $activity);
+    $new = TRUE;
+    
     $options = variable_get('node_options_activitystream', FALSE);
     if (is_array($options)) {
       $node->status = in_array('status', $options) ? 1 : 0;
@@ -709,13 +718,13 @@ function activitystream_save_node($activity, $user, $name) {
     else {
       $node->status = 1;
     }
-  }
+  //}
   // Has the source changed? If not, we don't want to update the node
   $source_changed = false;
   if(isset($node->title)) {
       $source_changed = ((strpos($activity['title'], $node->title) !== FALSE) && $node->body == $activity['body']) ? false : true;
   }
-  
+
   if ($source_changed || $new) {
     // Only save if if the source has changed or this is a new item
     $node->title = $activity['title'];
@@ -731,10 +740,18 @@ function activitystream_save_node($activity, $user, $name) {
     } 
     $node->created = $activity['timestamp'];
     $node->uid = $user->uid;
-    $node->type = 'activitystream';
     if (empty($node->language)) {
       // 'und' is the language-neutral code in Drupal 7.
       $node->language = 'und';
+    }
+    
+    if ($new) {
+    	// Add fields to the node.
+    	$node->activitystream_guid[$node->language][0]['value'] = $activity['guid'];
+    	$node->activitystream_module[$node->language][0]['value'] = $name;
+    	$node->activitystream_link[$node->language][0]['value'] = $activity['link'];
+    	$node->activitystream_data[$node->language][0]['value'] = $activity['data'];
+    	$node->activitystream_changed[$node->language][0]['value'] = $activity['timestamp'];
     }
     if (module_exists('taxonomy')) {
       $vid = variable_get('activitystream_vocabulary', -1);
@@ -742,43 +759,11 @@ function activitystream_save_node($activity, $user, $name) {
         $node->taxonomy['tags'] = array($vid => implode(',', $activity['categories']));  
       }
     }
-    if ($new) {
-      node_invoke($node, 'prepare');
-      module_invoke_all('node_prepare', $node, $activity);
-    }
     node_save($node);
-    $nid = activitystream_save_stream($node, $activity, $name);
-    if (!$nid) {
-      watchdog('activitystream', 'Could not create stream item '. $node->title, WATCHDOG_ERROR);
-      
-      // TODO we should probably delete the node here if the save_stream failed
-    }
   }
   return $node->nid;
 }
 
-function activitystream_save_stream(&$node, &$activity, $name) {
-  $query = db_query("SELECT nid, changed FROM {activitystream} WHERE guid = :guid", array(':guid' => $activity['guid']));
-  $n = $query->fetchObject();
-   if (isset($n->nid)) {
-    // This is an existing item. Update.
-    $actions = db_query('UPDATE {activitystream} SET changed = :changed', array(':changed' => $node->changed));    
-    if (!$actions) {
-      watchdog('activitystream', 'Cannot update stream item. Check the Drupal log for database errors.');
-      return NULL;            
-    }
-    watchdog('activitystream', 'Updated %title from %name', array('%title' => $node->title, '%name' => $name));    
-    return $node->nid;    
-  } else {
-    $actions = db_query('INSERT into {activitystream} (nid, module, guid, link, data, changed) VALUES (:nid, :module, :guid, :link, :data, :changed)', array(':nid' => $node->nid, ':module' => $name, ':guid' => $activity['guid'], ':link' => $activity['link'], ':data' => $activity['data'], ':changed' => $node->changed));
-    if (!$actions) {
-      watchdog('activitystream', 'Cannot save stream item. Check the Drupal log for database errors.');
-      return NULL;            
-    }
-    watchdog('activitystream', 'Added %title from %name', array('%title' => $node->title, '%name' => $name));    
-    return $node->nid;    
-  }
-}
 
 function activitystream_theme() {
   return array(

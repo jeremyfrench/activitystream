@@ -41,6 +41,9 @@ function activitystream_install() {
 }
 
 function activitystream_uninstall() {
+	
+	// TODO delete items
+	
   $fields = activitystream_fields();
   foreach($fields as $item) {
     field_delete_field($item['field_name']);
