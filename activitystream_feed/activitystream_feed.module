@@ -7,13 +7,13 @@
  * This is required by lastfm, twitter, digg and delicious.
  */
 
-$path = drupal_get_path('module', 'activitystream_feed') .'/simplepie.inc';
-
+$path = drupal_get_path('module', 'activitystream_feed') .'/simplepie.class.php';
+// TODO, get this into a init fuction
 if (module_exists('simplepie')) {
   simplepie_require();
 } else {
   if (!class_exists('SimplePie') && file_exists($path)) {
-    require_once $path;
+    require_once $path; 
   }
 }
 
@@ -27,7 +27,7 @@ function activitystream_feed_requirements($phase) {
   switch ($phase) {
     case 'install' :
     case 'runtime' :
-      $path = drupal_get_path('module', 'activitystream_feed') .'/simplepie.inc';
+      $path = drupal_get_path('module', 'activitystream_feed') .'/simplepie.class.php';
       if (!file_exists($path) && !module_exists('simplepie')) {
         $requirements['simplepie'] = array(
           'title' => $t("ActivityStream Feed: SimplePie Parser"),
@@ -92,7 +92,7 @@ function activitystream_feed_streamapi($user) {
       $activity['timestamp'] = strtotime(str_replace(',', '', $item->get_date()));
       $activity['guid'] = md5($item->get_permalink());
       $activity['id'] = md5($item->get_id());
-      $activity['data'] = serialize(array('favicon' => $feed->get_favicon(), 'feedtitle' => $feed->get_title()));
+      $activity['data'] = serialize(array('favicon' => $feed->get_image_url(), 'feedtitle' => $feed->get_title()));
       $activity['location'] = array('latitude' => $item->get_latitude(), 'longitude' => $item->get_longitude());
       if (module_exists('taxonomy') && variable_get('activitystream_vocabulary', -1) > 0) {
         $categories = $item->get_categories();
