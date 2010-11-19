@@ -118,7 +118,7 @@ function activitystream_fields() {
   // Store the changed date for the orignal item.
   $fields['changed'] = array(
     'field_name' => 'activitystream_changed',
-    'type' => 'int',
+    'type' => 'number_integer',
     'settings' => array(
        'no_ui' => TRUE,
      ),
@@ -153,8 +153,8 @@ $field_instances['link_instance'] = array(
     'entity_type' => 'node',
     'bundle' => 'activitystream',
     'required' => TRUE,
-    'label' => t('module'),
-    'description' => t('module that created the item'),
+    'label' => t('link'),
+    'description' => t('Link to the original item'),
   );
 
     //  
@@ -177,5 +177,5 @@ $field_instances['link_instance'] = array(
     'description' => t('Date the item changed'),
   );
   
-  return field_instances;
+  return $field_instances;
 }
