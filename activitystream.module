@@ -765,25 +765,29 @@ function activitystream_save_node($activity, $user, $name) {
 }
 
 
-function activitystream_theme() {
-  return array(
-    'activitystream' => array(
-      'variables' => array('items' => NULL),
-    ),
-    'activitystream_header' => array(
-      'variables' => array('action' => NULL),
-    ),
-    'activitystream_date' => array(
-      'variables' => array('date' => NULL),
-    ),
-    'activitystream_username' => array(
-      'variables' => array('user' => NULL),
-    ),
-    'activitystream_view' => array(
-      'variables' => array('activity' => NULL),
-    ),
-  );
+
+
+
+function activitystream_preprocess_node(&$variables) {
+  // Hide internal activitystream fields
+  hide($variables['content']['activitystream_guid']);
+  hide($variables['content']['activitystream_module']);
+  hide($variables['content']['activitystream_link']);
+  hide($variables['content']['activitystream_data']);
+  hide($variables['content']['activitystream_changed']);
+  // Transpose data into a variable which can be read elsewhere
+  
+ 
+  // TODO get unserialize data to work.
+  
+  
+  // Add option for sub module to theme items
+  $module = $variables['activitystream_module'][0]['value'];
+  $variables['theme_hook_suggestions'][] = 'node__activitystream__' . $module;
+
 }
+
+
 
 function activitystream_views_api() {
   return array(
@@ -791,6 +795,7 @@ function activitystream_views_api() {
     'path' => drupal_get_path('module', 'activitystream').'/views',
   );
 }
+
 
 
 /**
